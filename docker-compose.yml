@@ -1,0 +1,86 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment: 
+      POSTGRES_PASSWORD: rosa
+      POSTGRES_DB: db-dev
+    ports:
+      - 5432:5432
+    volumes:
+      - database:/var/lib/postgresql/data
+    networks:
+      - my-external-network
+    # networks:
+    #     credentials_network:
+    #       # This special IP address is recognized by the AWS SDKs and AWS CLI 
+    #       ipv4_address: "169.254.170.4"
+  adminer:
+    image: adminer
+    restart: always
+    links:
+     - db
+    ports:
+      - 8088:8080
+    networks:
+      - my-external-network
+  # ecs-local-endpoints:
+  #       # The Amazon ECS Local Container Endpoints Docker Image
+  #   image: amazon/amazon-ecs-local-container-endpoints
+  #   volumes:
+  #     # Mount /var/run so we can access docker.sock and talk to Docker
+  #     - /var/run:/var/run
+  #     # Mount the shared configuration directory, used by the AWS CLI and AWS SDKs
+  #     # On Windows, this directory can be found at "%UserProfile%\.aws"
+  #     - $HOME/.aws/:/home/.aws/
+  #   environment:
+  #     # define the home folder; credentials will be read from $HOME/.aws
+  #     HOME: "/home"
+  #     # You can change which AWS CLI Profile is used
+  #     AWS_PROFILE: "default"
+    # networks:
+    #     credentials_network:
+    #       # This special IP address is recognized by the AWS SDKs and AWS CLI 
+    #       ipv4_address: "169.254.170.3"
+                
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile.app
+    ports:
+      - 8082:8082
+    depends_on:
+      - db
+      - adminer
+    links:
+     - db
+    networks:
+      - my-external-network
+    # command: 
+    #   [
+    #     npx sequelize-cli db:migrate,
+    #   ]
+    environment:
+      PORT: 8082
+      PSQL_HOST: db
+      POSTGRES_PASSWORD: rosa
+      POSTGRES_USER: postgres
+      POSTGRES_DB: db-dev
+  
+
+networks:
+  my-external-network:
+    external: true
+
+  # credentials_network:
+    # driver: bridge
+    # ipam:
+      # config:
+        # - subnet: "169.254.170.0/24"
+          # gateway: 169.254.170.1
+
+volumes:
+  database:
+  

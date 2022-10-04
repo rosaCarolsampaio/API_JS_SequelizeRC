@@ -1,0 +1,5 @@
+Insomnia: localhost:8081/api/item/4
+
+sequelize:
+npx sequelize-cli db:create
+npx sequelize-cli db:migrate
